@@ -11,6 +11,7 @@ from steembase.transactions import SignedTransaction, fmt_time_from_now, \
 
 from .account import Account
 from .instance import shared_steemd_instance
+import getpass
 
 log = logging.getLogger(__name__)
 
@@ -118,7 +119,13 @@ class TransactionBuilder(dict):
             raise e
 
         if not any(self.wifs):
-            raise MissingKeyError
+            # if no key found in the wallet, give a chance to enter it manually for a one-time use
+            print("The required private key can't be found in the wallet.")
+            wif = getpass.getpass("Private key to sign: ")
+            if wif == '':
+                raise MissingKeyError
+            else:
+                self.wifs.add(wif)
 
         signedtx.sign(self.wifs, chain=self.steemd.chain_params)
         self["signatures"].extend(signedtx.json().get("signatures"))
